@@ -1,0 +1,18 @@
+#20190418_Hi-C_MCF7Caldon_T0_a1
+samtools sort -n -O bam -@ 4 -o /share/ScratchGeneral/joaach/HiC_Level2_Endocrine/20190418_Hi-C_MCF7Caldon_T0_a1/hicup/20190418_Hi-C_MCF7Caldon_T0_a1_sorted.asd.bam /share/ScratchGeneral/joaach/HiC_Level2_Endocrine/20190418_Hi-C_MCF7Caldon_T0_a1/hicup/20190418_Hi-C_MCF7Caldon_T0_a1.asd.bam
+
+#20190418_Hi-C_MCF7Caldon_T0_a2
+samtools sort -n -O bam -@ 4 -o /share/ScratchGeneral/joaach/HiC_Level2_Endocrine/20190418_Hi-C_MCF7Caldon_T0_a2/hicup/20190418_Hi-C_MCF7Caldon_T0_a2_sorted.asd.bam /share/ScratchGeneral/joaach/HiC_Level2_Endocrine/20190418_Hi-C_MCF7Caldon_T0_a2/hicup/20190418_Hi-C_MCF7Caldon_T0_a2.asd.bam
+
+#20190418_Hi-C_MCF7Caldon_p16_a1
+samtools sort -n -O bam -@ 4 -o /share/ScratchGeneral/joaach/HiC_Level2_Endocrine/20190418_Hi-C_MCF7Caldon_p16_a1/hicup/20190418_Hi-C_MCF7Caldon_p16_a1_sorted.asd.bam /share/ScratchGeneral/joaach/HiC_Level2_Endocrine/20190418_Hi-C_MCF7Caldon_p16_a1/hicup/20190418_Hi-C_MCF7Caldon_p16_a1.asd.bam
+
+#20190418_Hi-C_MCF7Caldon_p16_a2
+samtools sort -n -O bam -@ 4 -o /share/ScratchGeneral/joaach/HiC_Level2_Endocrine/20190418_Hi-C_MCF7Caldon_p16_a2/hicup/20190418_Hi-C_MCF7Caldon_p16_a2_sorted.asd.bam /share/ScratchGeneral/joaach/HiC_Level2_Endocrine/20190418_Hi-C_MCF7Caldon_p16_a2/hicup/20190418_Hi-C_MCF7Caldon_p16_a2.asd.bam
+
+#20190418_Hi-C_MCF7Caldon_p32_a1
+samtools sort -n -O bam -@ 4 -o /share/ScratchGeneral/joaach/HiC_Level2_Endocrine/20190418_Hi-C_MCF7Caldon_p32_a1/hicup/20190418_Hi-C_MCF7Caldon_p32_a1_sorted.asd.bam /share/ScratchGeneral/joaach/HiC_Level2_Endocrine/20190418_Hi-C_MCF7Caldon_p32_a1/hicup/20190418_Hi-C_MCF7Caldon_p32_a1.asd.bam
+
+#20190418_Hi-C_MCF7Caldon_p32_a2
+samtools sort -n -O bam -@ 4 -o /share/ScratchGeneral/joaach/HiC_Level2_Endocrine/20190418_Hi-C_MCF7Caldon_p32_a2/hicup/20190418_Hi-C_MCF7Caldon_p32_a2_sorted.asd.bam /share/ScratchGeneral/joaach/HiC_Level2_Endocrine/20190418_Hi-C_MCF7Caldon_p32_a2/hicup/20190418_Hi-C_MCF7Caldon_p32_a2.asd.bam
+
