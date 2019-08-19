@@ -1,0 +1,63 @@
+# Please change the variable settings below if necessary
+
+#########################################################################
+## Paths and Settings  - Do not edit !
+#########################################################################
+
+TMP_DIR = tmp
+LOGS_DIR = logs
+BOWTIE2_OUTPUT_DIR = bowtie_results
+MAPC_OUTPUT = hic_results
+RAW_DIR = rawdata
+
+#######################################################################
+## SYSTEM - PBS - Start Editing Here !!
+#######################################################################
+N_CPU = 2
+LOGFILE = hicpro.log
+
+JOB_NAME = MCF7_TAMR_FASR
+JOB_MEM = 128gb
+JOB_WALLTIME = 48:00:00
+JOB_QUEUE = batch
+JOB_MAIL = j.achinger@garvan.org.au
+
+#########################################################################
+## Data
+#########################################################################
+
+PAIR1_EXT = _R1
+PAIR2_EXT = _R2
+
+#######################################################################
+## Alignment options
+#######################################################################
+
+FORMAT = phred33
+MIN_MAPQ = 0
+
+BOWTIE2_IDX_PATH = /share/ClusterShare/biodata/contrib/genomeIndices_garvan/iGenomes/Homo_sapiens/UCSC/hg38/Sequence/Bowtie2Index
+BOWTIE2_GLOBAL_OPTIONS = --very-sensitive -L 30 --score-min L,-0.6,-0.2 --end-to-end --reorder
+BOWTIE2_LOCAL_OPTIONS =  --very-sensitive -L 20 --score-min L,-0.6,-0.2 --end-to-end --reorder
+
+#######################################################################
+## Annotation files
+#######################################################################
+
+REFERENCE_GENOME = genome
+GENOME_SIZE = /home/joaach/HiC-Pro_2/annotation/chrom_hg38.sizes
+
+#######################################################################
+## Allele specific
+#######################################################################
+
+ALLELE_SPECIFIC_SNP =
+
+#######################################################################
+## Digestion Hi-C
+#######################################################################
+
+GENOME_FRAGMENT = /home/joaach/HiC-Pro_2/annotation/NcoI_resfrag_hg38.bed
+LIGATION_SITE = CCATGCATGG
+MIN_FRAG_SIZE = 100
+MAX_FRAG_SIZE = 100000
