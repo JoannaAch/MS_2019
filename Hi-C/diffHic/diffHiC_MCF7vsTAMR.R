@@ -1,11 +1,11 @@
 library(diffHic)
 
 library(Rsamtools)
-library(BSgenome.Hsapiens.UCSC.hg19)
+library(BSgenome.Hsapiens.UCSC.hg38)
 
 ## try http:// if https:// URLs are not supported
 source("https://bioconductor.org/biocLite.R")
-biocLite("BSgenome.Hsapiens.UCSC.hg19")
+biocLite("BSgenome.Hsapiens.UCSC.hg38")
 
 setwd ("/Users/joanna/Desktop/PROJECTS/Endocrine_Resistance_Project/Analysis/Hi-C_Level_3_hg38/diffHic")
 bamFiles <- list.files("/Volumes/Joanna_HD/bams_diffHiC/hiccup_bams_new/")
