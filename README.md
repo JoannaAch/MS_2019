@@ -1,12 +1,7 @@
 # MS_2019
 
-Analysis pipeline for manuscript "Epigenetic reprogramming at estrogen-receptor binding sites alters the 3D chromatin landscape in endocrine resistant breast cancer":
-WGS
-Hi-C
-ChIPseq
-RNAseq
+Code used to generate data and figures for Achinger-Kawecka et al. "Epigenetic reprogramming at estrogen-receptor binding sites alters the 3D chromatin landscape in endocrine resistant breast cancer"
 
-Publically used software:
 Hi-C
 - HiC-Pro v2.9.0
 - HiC-Pro/hicpro2juicebox.sh
@@ -31,15 +26,7 @@ WGS
 
 WGBS
 - Meth10X (https://github.com/luuloi/Meth10X)
-- Bpipe v0.9.9.2
-- Trim Galore v0.2.8
-- Bwa-meth v0.20
-- bwa v0.7.13
-- Picard v2.3.0
-- QualiMap v2.1.3
-- MethylDackel (https://github.com/dpryan79/MethylDackel)
-- Biscuit (https://github.com/zwdzwd/biscuit)
-- Samtools v1.2
+
 
 RNA-seq MCF7 vs. TAMR and MCF7 vs. FASR
 - Trim Galore v0.11.2
