@@ -46,22 +46,10 @@ TAMR	H3K4me3	AndrewStone_TAMR_H3K4me3_1.asd.bam	USC20140228_TAMR_input.asd.bam
 TAMR	H3K27me3	AndrewStone_TAMR_H3K27me3_1.asd.bam	USC20140228_TAMR_input.asd.bam
 TAMR	H2AZac	USC20140228_TAMR_H2AZac.asd.bam	USC20140228_TAMR_input.asd.bam
 
-java -mx8000M -jar ChromHMM.jar BinarizeBam hg38.chrom.sizes /Volumes/GRIW/Cancer-Epigenetics/joaach/ChIP-seq_hg38/chromHMM_hg38 cellmarkfiletable 
-
-
-__ test with just one file copied into the directory:
-
-java -mx8000M -jar ChromHMM.jar BinarizeBam hg38.chrom.sizes ./input/ cellmarkfiletable_test ./
-
-
-## works with input bam files stored on external drive
-output binary files --> output_binary
-
-java -mx8000M -jar ChromHMM.jar BinarizeBam hg38.chrom.sizes /Volumes/EZ_EXT_HD/chromHMM_hg38/ cellmarkfiletable ./
 
 #### run LearnModel
 
-emissions - check 
+java -mx8000M -jar ChromHMM.jar BinarizeBam hg38.chrom.sizes /Volumes/GRIW/Cancer-Epigenetics/joaach/ChIP-seq_hg38/chromHMM_hg38 cellmarkfiletable 
 
 ## reoroder - to rename states according to emissions
 
@@ -84,8 +72,8 @@ java -mx8000M -jar ChromHMM.jar Reorder -m labelMappingFile_10 model_10.txt ./ou
 
 ### makeSegmentation - using re-ordered files
 
-model inout file:
-./output_reorder/model_10.txt
+#model input file:
+#./output_reorder/model_10.txt
 
 java -mx8000M -jar ChromHMM.jar MakeSegmentation ./output_reorder/model_10.txt ./output_binary ./output_segmentation
 
@@ -98,18 +86,16 @@ Writing to file ./output_segmentation/TAMR_10_segments.bed
 java -mx8000M -jar ChromHMM.jar MakeBrowserFiles -m labelMappingFile_10 -n 10 ./output_segmentation/MCF7_10_segments.bed MCF7_chromHMM MCF7_10states
 java -mx8000M -jar ChromHMM.jar MakeBrowserFiles -m labelMappingFile_10 -n 10 ./output_segmentation/TAMR_10_segments.bed TAMR_chromHMM TAMR_10states
 
-_____ MCF7 vs FASR - 8 sates, 4 marks (27me3 did not work in FASR)
-
-copy bam files into external drive
-make cellmarkfiletable_f
+_____ MCF7 vs FASR - 8 sates, 4 marks
+#make cellmarkfiletable_f
 
 
 java -mx8000M -jar ChromHMM.jar BinarizeBam hg38.chrom.sizes /Volumes/EZ_EXT_HD/chromHMM_hg38_MCF7_FASR/  cellmarkfiletable_f ./output_binary_f/
 
-## how many states? Test 6, 8 and 10
+## run LearnModel with 8 states
 java -mx8000M -jar ChromHMM.jar LearnModel output_binary_f/ ./output_learn_f 10 hg38
 
-8 best
+## reoroder - to rename states according to emissions
 
 nano labelMappingFile_8
 E1	Active_Enahncer
@@ -121,15 +107,16 @@ E6	Promoter
 E7	Active_Promoter
 E8	Strong_Promoter
 
-(no enter after last record)
-
+##Reorder
 java -mx8000M -jar ChromHMM.jar Reorder -m labelMappingFile_8  ./output_reorder_f
 
-
+### makeSegmentation - using re-ordered files
 java -mx8000M -jar ChromHMM.jar MakeSegmentation ./output_reorder_f/model_8.txt ./output_binary_f ./output_segmentation_f
 
 Writing to file ./output_segmentation_f/FASR_8_segments.bed
 Writing to file ./output_segmentation_f/MCF7_8_segments.bed
+
+## makeBrowsable files - using segmentation
 
 java -mx8000M -jar ChromHMM.jar MakeBrowserFiles -m labelMappingFile_8 -n 8 ./output_segmentation_f/FASR_8_segments.bed FASR_chromHMM FASR_8states
 java -mx8000M -jar ChromHMM.jar MakeBrowserFiles -m labelMappingFile_8 -n 8 ./output_segmentation_f/MCF7_8_segments.bed MCF7_chromHMM MCF7_8states
