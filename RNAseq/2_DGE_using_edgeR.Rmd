@@ -1,0 +1,351 @@
+---
+title: "# Differential Expression for each of MCF7x, FASR and TAMR vs MCF7"
+author: Kate Gould
+output: html_document 
+---
+## Import various libaries
+```{r libraries, message = FALSE, warning = FALSE}
+library(edgeR)
+library(ggplot2)
+library(gridExtra)
+library(data.table)
+library(gplots)
+library(goseq)
+library(GO.db)
+```
+
+## Initialization
+```{r initialize}
+OUTPUT.FOLDER <- "DGE_output/"
+if (!(file.exists(OUTPUT.FOLDER))){
+  dir.create(OUTPUT.FOLDER)
+}
+
+TABLES.FOLDER <- "tables/"
+
+raw.read.counts <- read.csv(paste0(TABLES.FOLDER, 
+                  "GENE_TAMR_FASR_MCF7_MCF7x_expected_count_table.csv"), row.names=1)
+tpm.data <- read.csv(paste0(TABLES.FOLDER, 
+            "GENE_TAMR_FASR_MCF7_MCF7x_TPM_table.csv"), row.names=1)
+
+# round the rsem gene expected counts values 
+# to the nearest integer to input into edgeR
+raw.read.counts <- round(raw.read.counts)
+
+# matrix of counts with ENSGxxxxxxxx tags
+counts <- data.matrix(raw.read.counts) 
+tpm.data.matrix <- data.matrix(tpm.data)
+
+sample.names <- colnames(raw.read.counts)
+
+# range of library size/sequencing depth
+library.size <- round(colSums(counts)/1e6, 1)
+print (library.size)
+```
+
+## QC check: Principle Component Analysis/Hierarchical Clustering
+```{r qc_check, include=TRUE}
+# perform PCA on log transformed count values
+pca <- prcomp(t(log(counts+1)), center=TRUE)
+# also see summary(pca)
+pc1.var <- round(pca$sdev[1]^2/sum(pca$sdev^2)*100,2) 
+pc2.var <- round(pca$sdev[2]^2/sum(pca$sdev^2)*100,2)
+pc.data.frame <- data.frame(PC1=pca$x[,1], PC2=pca$x[,2], 
+                            Name=colnames(counts), stringsAsFactors=F)
+
+makeLab <- function(x, pc) paste0("PC", pc, ": ", x,  "% variance")
+
+ggplot(pc.data.frame, aes(x=PC1, y=PC2, label=Name)) +
+  geom_point() + 
+  geom_text(aes(colour = factor(gsub("Rep1|Rep2|Rep3", "", pc.data.frame$Name)))) +
+  xlab(makeLab(pc1.var,1)) + ylab(makeLab(pc2.var,2)) +
+  ggtitle("PC1 vs PC2 for log(count) of MCF7/MCF7x/TAMR/FASR samples") +
+  expand_limits(x=c(-100, 200)) +
+  theme(legend.position = "none")
+
+
+# perform PCA on TPM values
+pca <- prcomp(t(tpm.data.matrix), center=TRUE)
+# also see summary(pca)
+pc1.var <- round(pca$sdev[1]^2/sum(pca$sdev^2)*100,2) 
+pc2.var <- round(pca$sdev[2]^2/sum(pca$sdev^2)*100,2)
+pc.data.frame <- data.frame(PC1=pca$x[,1], PC2=pca$x[,2], 
+                            Name=colnames(tpm.data.matrix))
+
+
+ggplot(pc.data.frame, aes(x=PC1, y=PC2, label=Name)) +
+  geom_point() + geom_text(aes(colour=factor(gsub("Rep1|Rep2|Rep3", "", pc.data.frame$Name)))) +
+  xlab(makeLab(pc1.var,1)) + ylab(makeLab(pc2.var,2)) +
+  ggtitle("PC1 vs PC2 for TPM values of MCF7/MCF7x/TAMR/FASR samples") +
+  expand_limits(x=c(-30000,20000)) +
+  theme(legend.position = "none")
+
+# hierarchical clustering for log count
+hc <- hclust(dist(t(log(counts+1))))       
+plot(hc, labels=colnames(counts), main="Clustering samples on log (count + 1)")
+
+# hierarchical clustering for TPM
+hc <- hclust(dist(t(tpm.data.matrix)))       
+plot(hc, labels=colnames(tpm.data.matrix), main="Clustering samples on TPM")
+
+```
+
+## Differential Expression Analysis
+### Design Matrix
+
+```{r design_matrix, include=TRUE}
+# Filter out ENSGxxxx tags whose coverage is so low that any group 
+# differences aren't truly "real". 
+# filter out tags whose rowcount <= degrees of freedom.
+counts <- counts[rowSums(counts) >= 3,]
+tpm.data.matrix <- tpm.data.matrix[rowSums(tpm.data.matrix) >= 3,]
+
+# set up design matrix
+group.types <- gsub("Rep1_|Rep2_|Rep3_", "", colnames(counts))
+
+group <- factor(group.types)
+
+design <- model.matrix(~0+group) 
+colnames(design) <- gsub("group", "", colnames(design))
+
+design
+
+y <- DGEList(counts=counts, group=group)
+
+```
+
+### TMM normalization
+```{r tmm_norm, include=TRUE}
+# The calcNormFactors() function normalizes for RNA composition by finding 
+# a set of scaling factors for the library sizes that minimize the log-fold 
+# changes between the samples for most genes. 
+# The default method for computing these scale factors uses a trimmed mean 
+# of M-values (TMM) between each pair of samples. It is based on the 
+# hypothesis that most genes are not DE.
+y <- calcNormFactors(y)
+
+# produce a plot showing the sample relations based on multidimensional scaling.
+plotMDS(y, method="bcv", col=as.numeric(y$samples$group), 
+        main="MDS plot of MCF7/MCF7x/TAMR/FASR samples")
+
+# Dispersion
+y <- estimateDisp(y, design)
+y$common.dispersion
+
+# plot the genewise biological coefficient of variation (BCV) against 
+# gene abundance (in log2 counts per million). 
+plotBCV(y)
+
+# Fitting linear model
+fit <- glmFit(y,design)
+
+# find the tags that are interesting by using a 
+# LRT (Likelihood Ratio Test)
+
+# initial basic paired comparisons to parental MCF7 cell-line
+# alternative to use ? makeContrasts (limma)
+# MCF7x vs MCF7
+lrt.MCFx.vs.MCF7 <- glmLRT(fit, contrast=c(0, -1, 1, 0))
+# FASR vs MCF7
+lrt.FASR.vs.MCF7 <- glmLRT(fit, contrast=c(1, -1, 0, 0))
+# TAMR vs MCF7
+lrt.TAMR.vs.MCF7 <- glmLRT(fit, contrast=c(0, -1, 0, 1))
+
+# relative comparison of (TAMR+FASR+MCF7x)-MCF7
+#lrt.TAMR.FASR.MCF7x.vs.MCF7 <- glmLRT(fit, contrast=c(0.33, -1, 0.33, 0.33))
+
+# add all contrasts to a list for subsequent processing
+lrt.list <- list(lrt.MCFx.vs.MCF7=lrt.MCFx.vs.MCF7, 
+                 lrt.FASR.vs.MCF7=lrt.FASR.vs.MCF7, 
+                 lrt.TAMR.vs.MCF7=lrt.TAMR.vs.MCF7)
+                 #lrt.TAMR.FASR.MCF7x.vs.MCF7=lrt.TAMR.FASR.MCF7x.vs.MCF7)
+
+# annotation
+# FROM GTF FILE
+gtf.annotation.file <- "../data/hg38/gtf/gene_annotation.tsv"
+gtf.anno <- read.table(gtf.annotation.file, header=TRUE, stringsAsFactors=F)
+
+# annotation file downloaded from http://dec2013.archive.ensembl.org/biomart/martview/
+# has following columns: ensembl.gene.ID, chr, start, end, strand, description, 
+# HGNC.symbol, entrez.gene.ID
+annotation.file <- "Ensembl_87_GRCh38.p7_biomart_export.tsv"
+if (!(file.exists(annotation.file))){
+  untar(paste0("input/", annotation.file, ".tgz"))
+}
+
+DT <- fread(annotation.file)
+setnames(DT, gsub(" ", ".", colnames(DT)))
+setkey(DT, ensembl.gene.ID)
+
+DGE.results <- list()
+
+```
+
+### Differential expression for various contrasts
+```{r diff_expression, include=TRUE}
+# implement once here for use with repeated GOseq analysis within lapply
+# GOseq
+lengths.gene <- read.csv(paste0(TABLES.FOLDER, 
+                  "GENE_TAMR_FASR_MCF7_MCF7x_effective_length_table.csv"), row.names=1)
+# get the average gene length for each row
+lengths <- apply(lengths.gene, 1, mean)
+
+getgoresults <- function(DMgenes, bias.data, output.folder){
+  
+  # fitting the Probability Weighting Function
+  # PWF quantifies how the probability of a gene selected as DE changes 
+  # as a function of its transcript length
+  pwf <- nullp(DEgenes=DMgenes, genome="hg38", id="geneSymbol", 
+         bias.data=bias.data, plot.fit=FALSE)
+  pdf(paste0(output.folder, "pwf.goodness.of.fit.plot.pdf"))
+  plotPWF(pwf)
+  dev.off()
+  # calculate  the  over  and  under  expressed  GO
+  # categories among DE genes
+  # goseqres ordered by GO category over representation amongst DE genes.
+  goseqres <- goseq(pwf, "hg38", "geneSymbol")
+  # multiple correction
+  goseqres$over_fdr <- p.adjust(goseqres$over_represented_pvalue, method="BH")
+  goseqres$under_fdr <- p.adjust(goseqres$under_represented_pvalue, method="BH")
+  
+  over <- goseqres[order(goseqres$over_fdr),]
+  
+  go <- getgo(names(DMgenes),"hg38","geneSymbol")
+  go <- go[DMgenes==1]
+  go <- go[!is.na(names(go))]
+  # create array of gene name-GO term
+  gotable <- array(0, c(0, 2))
+  for (i in 1:length(go)){
+    gotable <- rbind(gotable, cbind(rep(names(go)[[i]], length(go[[i]])), unlist(go[[i]])))
+  }
+  # split by go term into genes
+  gomap <- split(gotable[,1], gotable[,2])
+  # add to goseq results table
+  m <- match(goseqres$category, names(gomap))
+  over$genes <- sapply(m, function(x) paste(unlist(gomap[x]), collapse=', '))
+  over
+}
+
+LOG.FC.THRESH <- 4
+FDR.THRESH <- 0.05
+PVALUE.THRESH <- 0.05
+
+res <- lapply(names(lrt.list), function(contrast){
+  
+  
+  comparison <- gsub("lrt.", "", contrast)
+  
+  partA <- strsplit(comparison, ".vs.")[[1]][1]
+  partB <- strsplit(comparison, ".vs.")[[1]][2]
+  
+  print (paste0(partA, " vs ", partB))
+  SUB.FOLDER <- paste0(OUTPUT.FOLDER, gsub("lrt.", "", contrast), "/")
+  
+  if (!(file.exists(SUB.FOLDER))){
+    dir.create(SUB.FOLDER)
+  }
+  # Top table
+  # the default method used to adjust p-values for multiple testing is BH.
+  tt <- topTags(lrt.list[[contrast]], n=nrow(counts))$table
+  
+  m <- match(rownames(tt), gtf.anno$gene.id)
+
+  # assign the rownames(tt) as the gene_id as more specific with version number at end
+  # as originates from original gtf
+  tt$gene.id <- rownames(tt)
+  tt$gene.symbol <- gtf.anno$gene.name[m]
+  tt$chr <- gtf.anno$chr[m]
+  tt$start <- gtf.anno$start[m]
+  tt$end <- gtf.anno$end[m]
+  tt$strand <- gtf.anno$strand[m]
+  tt$gene.type <- gtf.anno$gene.type[m]
+  
+  m <- match(gsub("\\.[0-9]*", "", rownames(tt)), DT$ensembl.gene.ID)
+
+  tt$description <- DT$description[m]
+  tt$entrez.gene.id <- DT$entrez.gene.ID[m]
+
+  # only keep chromosome names beginning with chr1..22, X, Y; remove patch chromosome assignments 
+  # like JH806587.1, JH806587.1 etc
+  tt <- tt[grep("chr*", tt$chr),]
+  
+  #Volcano plot
+  
+  plot(tt$logFC, -log10(tt$PValue), type="n", xlab=paste0(partB, " <- -> ", partA, " logFC"), 
+       ylab="-log10(p.value)", main=paste0("Volcano plot of ", partA, " vs ", partB))
+  text(tt$logFC, -log10(tt$PValue), labels = tt$gene.symbol, cex=0.5)
+  abline(h=-log10(tt$PValue[sum(tt$PValue < PVALUE.THRESH)]), col="red")
+
+  
+  # The function plotSmear generates a plot of the tagwise log-fold-changes against 
+  # log-cpm (analogous to an MA-plot for microarray data). 
+  # DE tags are highlighted on the plot
+
+  de2 <- decideTestsDGE(lrt.list[[contrast]], p.value=FDR.THRESH, lfc=LOG.FC.THRESH)
+  de2tags <- rownames(y)[as.logical(de2)]
+  plotSmear(lrt.list[[contrast]], de.tags=de2tags, 
+            main=paste0("smear plot with FDR < ", FDR.THRESH, " and LFC=", LOG.FC.THRESH ," cutoffs"))
+  abline(h = c(-LOG.FC.THRESH, LOG.FC.THRESH), col = "blue")
+
+  
+  # defining significant as FDR < FDR.THRESH and abs(logFC) > LOG.FC.THRESH 
+  # add DGE.status column
+  # UP, DOWN, NC
+  tt$DGE.status <- "NC"
+  # defining significant as FDR < FDR.THRESH and abs(logFC) > 2 for UP/DOWN
+  if (nrow(tt[((tt$FDR < FDR.THRESH)&(tt$logFC > LOG.FC.THRESH)),]) > 0){
+    tt[((tt$FDR < FDR.THRESH)&(tt$logFC > LOG.FC.THRESH)),]$DGE.status <- "UP"
+  }
+  if (nrow(tt[((tt$FDR < FDR.THRESH)&(tt$logFC < -LOG.FC.THRESH)),]) > 0){
+    tt[((tt$FDR < FDR.THRESH)&(tt$logFC < -LOG.FC.THRESH)),]$DGE.status <- "DOWN"
+  }
+  
+  print(sprintf("Nr of genes marked as differentially UP: %i", 
+    sum(tt$FDR < FDR.THRESH & tt$logFC > LOG.FC.THRESH)))
+  print(sprintf("Nr of genes marked as differentially DOWN: %i", 
+    sum(tt$FDR < FDR.THRESH & tt$logFC < -LOG.FC.THRESH)))
+  
+  print(sprintf("genes differentially expressed as percent of total: %.2f", round((nrow(tt[((tt$FDR < FDR.THRESH)&(abs(tt$logFC) > LOG.FC.THRESH)),])/nrow(tt)) * 100, 2)))
+  
+  # filtering/re-ordering
+  column.order <- c(6:15, 1:5)
+  tt <- tt[column.order]
+  tt[is.na(tt)] <- ""
+  
+  write.table(tt, paste0(SUB.FOLDER, comparison, ".DGE.tsv"), sep="\t", quote=F, row.names=F)
+  
+  # add toptable to DGE.results list for generating venn diagrams
+  DGE.results[[contrast]] <<- tt
+  
+  # defining significant as FDR < FDR.THRESH and abs(logFC) > LOG.FC.THRESH 
+  sigtt <- tt[((tt$FDR < FDR.THRESH)&(abs(tt$logFC) > LOG.FC.THRESH)),]
+  
+  # GOseq
+  bias.data <- lengths[rownames(tt)]
+  names(bias.data) <- tt$gene.symbol
+  bias.data <- bias.data[!duplicated(names(bias.data))]
+  if (length(names(bias.data[(names(bias.data) == "")])) > 0){
+    bias.data <- bias.data[-which(names(bias.data)=="")]
+  }
+  bias.data <- bias.data[-which(bias.data==0)]
+  if (length(names(bias.data[(is.na(names(bias.data)))])) > 0){
+    bias.data <- bias.data[-which(is.na(names(bias.data)))]
+  }
+  
+  comparison.UP <- sigtt$gene.symbol[sigtt$logFC > 0]
+  comparison.DOWN <- sigtt$gene.symbol[sigtt$logFC < 0]
+  
+  comparison.UP.DE <- sapply(names(bias.data), function (x) as.numeric(x %in% comparison.UP))
+  comparison.DOWN.DE <- sapply(names(bias.data), function (x) as.numeric(x %in% comparison.DOWN))
+  
+  goterms <- as.list(GOTERM)
+  
+  # call function
+  comparison.UP.enriched <- getgoresults(comparison.UP.DE, bias.data, SUB.FOLDER)
+  comparison.DOWN.enriched <- getgoresults(comparison.DOWN.DE, bias.data, SUB.FOLDER)
+  
+  write.csv(comparison.UP.enriched, file=paste0(SUB.FOLDER, partA, "_UP_ontology_enrichment.csv"))
+  write.csv(comparison.DOWN.enriched, file=paste0(SUB.FOLDER, partB, "_DOWN_ontology_enrichment.csv"))
+  
+})
+```
