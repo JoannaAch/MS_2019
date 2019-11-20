@@ -86,8 +86,8 @@ prunePairs("MCF7_1.h5", hs.param, file.out="MCF7_1_trimmed.h5", max.frag=600, mi
 
 
 ##Cardiff MCF72 - sort by name
-#diagnostics <- preparePairs("/Volumes/Joanna_HD/bams_for_diffHiC/bams_for_diffhic/", hs.param, file="MCF7_2.h5", dedup=TRUE, minq=10)
-#prunePairs("MCF7_2.h5", hs.param, file.out="MCF7_2_trimmed.h5", max.frag=600, min.inward=min.inward, min.outward=min.outward)
+diagnostics <- preparePairs("/Volumes/Joanna_HD/bams_for_diffHiC/bams_for_diffhic/TKCC_MCF7C_NcolII_2_sorted.asd.bam", hs.param, file="MCF7_2.h5", dedup=TRUE, minq=10)
+prunePairs("MCF7_2.h5", hs.param, file.out="MCF7_2_trimmed.h5", max.frag=600, min.inward=min.inward, min.outward=min.outward)
 
 ##Cardiff MCF73 - sort by name
 diagnostics <- preparePairs("/Volumes/Joanna_HD/bams_for_diffHiC/bams_for_diffhic/TKCC_MCF7C_NcolII_3_sorted.asd.bam", hs.param, file="MCF7_3.h5", dedup=TRUE, minq=10)
@@ -107,8 +107,8 @@ diagnostics <- preparePairs("/Volumes/Joanna_HD/bams_for_diffHiC/bams_for_diffhi
 prunePairs("TAMR_2.h5", hs.param, file.out="TAMR_2_trimmed.h5", max.frag=600, min.inward=min.inward, min.outward=min.outward)
 
 ##Cardiff TAMR3 - sort by name
-#diagnostics <- preparePairs("/Volumes/Joanna_HD/bams_for_diffHiC/bams_for_diffhic/", hs.param, file="TAMR_3.h5", dedup=TRUE, minq=10)
-#prunePairs("TAMR_3.h5", hs.param, file.out="TAMR_3_trimmed.h5", max.frag=600, min.inward=min.inward, min.outward=min.outward)
+diagnostics <- preparePairs("/Volumes/Joanna_HD/bams_for_diffHiC/bams_for_diffhic/TKCC_TAMR_pooled_NcolII_3_sorted.asd.bam", hs.param, file="TAMR_3.h5", dedup=TRUE, minq=10)
+prunePairs("TAMR_3.h5", hs.param, file.out="TAMR_3_trimmed.h5", max.frag=600, min.inward=min.inward, min.outward=min.outward)
 
 ##Cardiff FASR1 - sort by name
 diagnostics <- preparePairs("/Volumes/Joanna_HD/bams_for_diffHiC/bams_for_diffhic/TKCC_FASR_pooled_NcolII_1_sorted.asd.bam", hs.param, file="FASR_1.h5", dedup=TRUE, minq=10)
@@ -150,7 +150,21 @@ savePairs(dummy, "example.h5", hs.param)
 
 
 ## 
-input <- c("MCF7_1_trimmed.h5", "MCF7_3_trimmed.h5", "TAMR_1_trimmed.h5", "TAMR_2_trimmed.h5", "FASR_1_trimmed.h5", "FASR_2_trimmed.h5", "FASR_3_trimmed.h5", "MCF7_p16_a2_trimmed.h5", "MCF7_p16_a1_trimmed.h5", "MCF7_T0_a1_trimmed.h5", "MCF7_T0_a2_trimmed.h5", "MCF7_p32_a1_trimmed.h5", "MCF7_p32_a2_trimmed.h5" )
+input <- c("MCF7_1_trimmed.h5",
+           "MCF7_2_trimmed.h5",
+           "MCF7_3_trimmed.h5",
+           "TAMR_1_trimmed.h5",
+           "TAMR_2_trimmed.h5",
+           "TAMR_3_trimmed.h5",
+           "FASR_1_trimmed.h5",
+           "FASR_2_trimmed.h5",
+           "FASR_3_trimmed.h5",
+           "MCF7_p16_a2_trimmed.h5",
+           "MCF7_p16_a1_trimmed.h5",
+           "MCF7_T0_a1_trimmed.h5",
+           "MCF7_T0_a2_trimmed.h5",
+           "MCF7_p32_a1_trimmed.h5",
+           "MCF7_p32_a2_trimmed.h5" )
 
 hs.param
 bin.size <- 5e5
