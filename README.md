@@ -1,6 +1,6 @@
 # MS_2019
 
-Code used to generate data and figures for Achinger-Kawecka et al. "Epigenetic reprogramming at estrogen-receptor binding sites alters the 3D chromatin landscape in endocrine resistant breast cancer"
+Code used to generate data and figures for Achinger-Kawecka et al. "Epigenetic reprogramming at estrogen-receptor binding sites alters 3D chromatin landscape in endocrine resistant breast cancer"
 
 Hi-C
 - HiC-Pro v2.9.0
